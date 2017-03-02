@@ -1,0 +1,21 @@
+{
+  "name": "socketiomicrophone",
+  "description": "",
+  "main": "app.js",
+  "authors": [
+    "Ryan Lucas"
+  ],
+  "license": "ISC",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.1.1"
+  }
+}
