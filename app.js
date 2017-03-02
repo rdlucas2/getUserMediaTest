@@ -29,6 +29,10 @@ app.get('/delivery.js', function(req, res, next) {
 app.get('/style.css', function(req, res, next) {
     res.sendFile(__dirname + '/style.css');
 });
+app.get('/ATC_Theme_-_Washington_Saxophone_Quartet_Version.mp3', function(req, res, next) {
+    res.sendFile(__dirname + '/ATC_Theme_-_Washington_Saxophone_Quartet_Version.mp3');
+});
+
 // var port = 4200;
 var port = 443;
 server.listen(port);
@@ -86,7 +90,10 @@ io.sockets.on('connection', function(socket) {
             }
         }
 
-        fs.unlink(filename); //don't have to delete immediately just don't want to add a ton of files to my comp!
+        setTimeout(function() {
+            fs.unlink(filename); //don't have to delete immediately just don't want to add a ton of files to my comp!
+        }, 20000);
+
     });
 
     socket.on('disconnect', function() {

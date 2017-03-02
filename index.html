@@ -36,7 +36,17 @@
             <input type="button" id="chat_btn" value="Send Message">
         </div>
         <div id="audiostuff">
-            <input type="button" id="audio_btn" value="Get Audio">
+            <input type="button" id="bufferSource_btn" value="Get Audio From Buffer Source">
+            <input type="button" id="audio_btn" value="Get Audio From Socket">
+            <!--<input type="button" id="distort_btn" value="Distort Audio">-->
+            <input type="button" id="biquad_btn" value="Filter Audio">
+            <select id="voiceSelect">
+                <option value="distortion">Distortion</option>
+                <option value="convolver">Reverb</option>
+                <option value="biquad">Bass Boost</option>
+                <option value="off" selected>Off</option>
+            </select>
+            <input type="button" id="undistort_btn" value="Clean Audio">
             <audio id="player" controls>
             </audio>
         </div>
@@ -75,7 +85,6 @@
                     console.log("file was successfully sent.");
                 });
 
-
                 navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
 
                 var record = document.querySelector('.record');
@@ -86,6 +95,32 @@
 
                 stop.disabled = true;
                 var audioCtx = new(window.AudioContext || webkitAudioContext)();
+
+                var concertHallBuffer;
+
+                ajaxRequest = new XMLHttpRequest();
+
+                ajaxRequest.open('GET', 'https://mdn.github.io/voice-change-o-matic/audio/concert-crowd.ogg', true);
+
+                ajaxRequest.responseType = 'arraybuffer';
+
+                ajaxRequest.onload = function() {
+                    var audioData = ajaxRequest.response;
+
+                    audioCtx.decodeAudioData(audioData, function(buffer) {
+                        concertHallBuffer = buffer;
+                        soundSource = audioCtx.createBufferSource();
+                        soundSource.buffer = concertHallBuffer;
+                    }, function(e) {
+                        "Error with decoding audio data" + e.err
+                    });
+
+                    //soundSource.connect(audioCtx.destination);
+                    //soundSource.loop = true;
+                    //soundSource.start();
+                }
+
+                ajaxRequest.send();
 
                 if (navigator.getUserMedia) {
                     console.log('getUserMedia supported.');
@@ -298,6 +333,134 @@
                         audio.src = (window.URL || window.webkitURL).createObjectURL(new Blob(parts));
                         audio.play();
                     });
+                });
+
+                function makeDistortionCurve(amount) {
+                    var k = typeof amount === 'number' ? amount : 50,
+                        n_samples = 44100,
+                        curve = new Float32Array(n_samples),
+                        deg = Math.PI / 180,
+                        i = 0,
+                        x;
+                    for (; i < n_samples; ++i) {
+                        x = i * 2 / n_samples - 1;
+                        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+                    }
+                    return curve;
+                };
+
+                var source;
+                // $('#distort_btn').click(function(e) {
+                //     e.preventDefault();
+                //     if (!source) {
+                //         source = audioCtx.createMediaElementSource(audio);
+                //     }
+                //     var gainNode = audioCtx.createGain();
+                //     var distortion = audioCtx.createWaveShaper();
+                //     distortion.curve = makeDistortionCurve(400);
+                //     distortion.oversample = "4x";
+                //     source.connect(distortion);
+                //     distortion.connect(gainNode);
+                //     gainNode.connect(audioCtx.destination);
+                // });
+
+                var distortion = audioCtx.createWaveShaper();
+                var gainNode = audioCtx.createGain();
+                var biquadFilter = audioCtx.createBiquadFilter();
+                var convolver = audioCtx.createConvolver();
+
+                $('#undistort_btn').click(function(e) {
+                    e.preventDefault();
+                    source.disconnect();
+                    distortion.disconnect();
+                    biquadFilter.disconnect();
+                    convolver.disconnect();
+                    gainNode.disconnect();
+                    source.connect(audioCtx.destination);
+                });
+
+                $('#biquad_btn').click(function(e) {
+                    e.preventDefault();
+                    if (!source) {
+                        source = audioCtx.createMediaElementSource(audio);
+                    }
+                    // audio.pause();
+                    // audio.currentTime = 0;
+
+                    // //simple example
+                    // var gainNode = audioCtx.createGain();
+                    // var biquadFilter = audioCtx.createBiquadFilter();
+                    // biquadFilter.type = "peaking";
+                    // biquadFilter.frequency.value = 1000;
+                    // biquadFilter.detune = -5000;
+                    // biquadFilter.gain.value = 25;
+
+                    // source.connect(biquadFilter);
+                    // biquadFilter.connect(gainNode);
+                    // gainNode.connect(audioCtx.destination);
+                    // //end simple example
+
+                    distortion.oversample = '4x';
+                    biquadFilter.gain.value = 0;
+                    convolver.buffer = undefined;
+
+                    var voiceSelect = document.getElementById('voiceSelect');
+                    var voiceSetting = voiceSelect.value;
+                    console.log(voiceSetting);
+
+                    if (voiceSetting == "distortion") {
+                        distortion.curve = makeDistortionCurve(400);
+                        source.connect(distortion);
+                        distortion.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+                    } else if (voiceSetting == "convolver") {
+                        convolver.buffer = concertHallBuffer;
+                        source.connect(convolver);
+                        convolver.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+                    } else if (voiceSetting == "biquad") {
+                        biquadFilter.type = "lowshelf";
+                        biquadFilter.frequency.value = 1000;
+                        biquadFilter.gain.value = 25;
+                        source.connect(biquadFilter);
+                        biquadFilter.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+                    } else if (voiceSetting == "off") {
+                        console.log("Voice settings turned off");
+                        source.connect(audioCtx.destination);
+                    }
+
+                    // source.connect(distortion);
+                    // distortion.connect(biquadFilter);
+                    // biquadFilter.connect(convolver);
+                    // convolver.connect(gainNode);
+                    // gainNode.connect(audioCtx.destination);
+
+                    // source.connect(audioCtx.destination);
+                });
+
+                $('#bufferSource_btn').click(function(e) {
+                    var getSound = new XMLHttpRequest(); // Load the Sound with XMLHttpRequest
+                    getSound.open("GET", "/ATC_Theme_-_Washington_Saxophone_Quartet_Version.mp3", true); // Path to Audio File
+                    getSound.responseType = "arraybuffer"; // Read as Binary Data
+                    getSound.onload = function() {
+                        audioCtx.decodeAudioData(getSound.response, function(buffer) {
+                            var convolver = audioCtx.createConvolver();
+
+                            // Wiring
+                            var playSound = audioCtx.createBufferSource(); // Declare a New Sound
+                            playSound.buffer = buffer; // Attatch our Audio Data as it's Buffer
+                            // playSound.connect(audioCtx.destination); // Link the Sound to the Output
+                            playSound.connect(convolver);
+                            convolver.connect(audioCtx.destination);
+
+                            var playSound = audioCtx.createBufferSource(); // Declare a New Sound
+                            playSound.buffer = buffer; // Attatch our Audio Data as it's Buffer
+                            playSound.connect(audioCtx.destination); // Link the Sound to the Output
+                            playSound.start(0); // Play the Sound Immediately
+                        });
+                    }
+                    getSound.send(); // Send the Request and Load the File
                 });
 
             });
