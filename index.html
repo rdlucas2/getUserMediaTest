@@ -39,7 +39,7 @@
             <input type="button" id="bufferSource_btn" value="Get Audio From Buffer Source">
             <input type="button" id="audio_btn" value="Get Audio From Socket">
             <!--<input type="button" id="distort_btn" value="Distort Audio">-->
-            <input type="button" id="biquad_btn" value="Filter Audio">
+            <!--<input type="button" id="biquad_btn" value="Filter Audio">-->
             <select id="voiceSelect">
                 <option value="distortion">Distortion</option>
                 <option value="convolver">Reverb</option>
@@ -379,7 +379,7 @@
                     source.connect(audioCtx.destination);
                 });
 
-                $('#biquad_btn').click(function(e) {
+                $('#voiceSelect').change(function(e) {
                     e.preventDefault();
                     if (!source) {
                         source = audioCtx.createMediaElementSource(audio);
@@ -404,8 +404,7 @@
                     biquadFilter.gain.value = 0;
                     convolver.buffer = undefined;
 
-                    var voiceSelect = document.getElementById('voiceSelect');
-                    var voiceSetting = voiceSelect.value;
+                    var voiceSetting = e.target.value;
                     console.log(voiceSetting);
 
                     if (voiceSetting == "distortion") {
@@ -427,6 +426,11 @@
                         gainNode.connect(audioCtx.destination);
                     } else if (voiceSetting == "off") {
                         console.log("Voice settings turned off");
+                        source.disconnect();
+                        distortion.disconnect();
+                        biquadFilter.disconnect();
+                        convolver.disconnect();
+                        gainNode.disconnect();
                         source.connect(audioCtx.destination);
                     }
 
