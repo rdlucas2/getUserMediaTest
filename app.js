@@ -2,14 +2,13 @@
 var express = require('express');
 var app = express();
 var fs = require('fs');
-// var server = require('http').createServer(app);
+var server = require('http').createServer(app);
 
-var port = 443;
-var options = {
-    key: fs.readFileSync('../../../private.pem'),
-    cert: fs.readFileSync('../../../public.pem')
-};
-var server = require('https').createServer(options, app);
+// var options = {
+//     key: fs.readFileSync('../../../private.pem'),
+//     cert: fs.readFileSync('../../../public.pem')
+// };
+// var server = require('https').createServer(options, app);
 
 var io = require('socket.io')(server);
 var ss = require('socket.io-stream');
@@ -29,12 +28,15 @@ app.get('/delivery.js', function(req, res, next) {
 app.get('/style.css', function(req, res, next) {
     res.sendFile(__dirname + '/style.css');
 });
+app.get('/index.js', function(req, res, next) {
+    res.sendFile(__dirname + '/index.js');
+});
 app.get('/ATC_Theme_-_Washington_Saxophone_Quartet_Version.mp3', function(req, res, next) {
     res.sendFile(__dirname + '/ATC_Theme_-_Washington_Saxophone_Quartet_Version.mp3');
 });
 
-// var port = 4200;
-var port = 443;
+var port = 4200;
+// var port = 443;
 server.listen(port);
 console.log('server listening on port ' + port)
 

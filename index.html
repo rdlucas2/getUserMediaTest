@@ -59,12 +59,13 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="socket.io-stream.js"></script>
     <script src="delivery.js"></script>
+    <script src="index.js"></script>
     <script>
         $(function() {
-            // var socket = io.connect('http://localhost:4200');
-            var socket = io.connect('https://10.2.10.244', {
-                secure: true
-            });
+            var socket = io.connect('http://localhost:4200');
+            // var socket = io.connect('https://10.2.10.244', {
+            //     secure: true
+            // });
 
             socket.on('connect', function(data) {
                 socket.emit('join', 'Hello World from client');
@@ -124,6 +125,15 @@
 
                 if (navigator.getUserMedia) {
                     console.log('getUserMedia supported.');
+
+                    const onAnythingSaid = text => console.log(`Interim text: ${text}`);
+                    const onFinalised = text => console.log(`Finalised text: ${text}`);
+                    try {
+                        const listener = new SpeechToText(onAnythingSaid, onFinalised);
+                        listener.startListening();
+                    } catch (error) {
+                        console.log(error);
+                    }
 
                     var constraints = {
                         audio: true
