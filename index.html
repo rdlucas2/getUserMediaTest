@@ -15,6 +15,7 @@
             <div id="buttons">
                 <button class="record">Record</button>
                 <button class="stop">Stop</button>
+                <button id="startSpeechToText">Speech To Text</button>
             </div>
         </section>
         <section class="sound-clips">
@@ -128,25 +129,30 @@
                 if (navigator.getUserMedia) {
                     console.log('getUserMedia supported.');
 
-                    const onAnythingSaid = text => console.log(`Interim text: ${text}`);
-                    const onFinalised = text => $('#speechToTextZone').append('<li>' + text + '</li>'); //console.log(`Finalised text: ${text}`);
+                    $('#startSpeechToText').click(function(e) {
+                        e.preventDefault();
 
-                    const onFinishedListening = function() {
-                        console.log('finished listening, restart');
+                        const onAnythingSaid = text => console.log(`Interim text: ${text}`);
+                        const onFinalised = text => $('#speechToTextZone').append('<li>' + text + '</li>'); //console.log(`Finalised text: ${text}`);
+
+                        const onFinishedListening = function() {
+                            console.log('finished listening');
+                            // try {
+                            //     const listener = new SpeechToText(onAnythingSaid, onFinalised, onFinishedListening);
+                            //     listener.startListening();
+                            // } catch (error) {
+                            //     console.log(error);
+                            // }
+                        }
+
                         try {
                             const listener = new SpeechToText(onAnythingSaid, onFinalised, onFinishedListening);
                             listener.startListening();
                         } catch (error) {
                             console.log(error);
                         }
-                    }
+                    });
 
-                    try {
-                        const listener = new SpeechToText(onAnythingSaid, onFinalised, onFinishedListening);
-                        listener.startListening();
-                    } catch (error) {
-                        console.log(error);
-                    }
 
 
 
