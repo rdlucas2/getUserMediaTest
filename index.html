@@ -55,6 +55,8 @@
             <input type="button" id="file_btn" value="Send">
         </div>
     </form>
+    <ul id="speechToTextZone">
+    </ul>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="socket.io-stream.js"></script>
@@ -127,13 +129,26 @@
                     console.log('getUserMedia supported.');
 
                     const onAnythingSaid = text => console.log(`Interim text: ${text}`);
-                    const onFinalised = text => console.log(`Finalised text: ${text}`);
+                    const onFinalised = text => $('#speechToTextZone').append('<li>' + text + '</li>'); //console.log(`Finalised text: ${text}`);
+
+                    const onFinishedListening = function() {
+                        console.log('finished listening, restart');
+                        try {
+                            const listener = new SpeechToText(onAnythingSaid, onFinalised, onFinishedListening);
+                            listener.startListening();
+                        } catch (error) {
+                            console.log(error);
+                        }
+                    }
+
                     try {
-                        const listener = new SpeechToText(onAnythingSaid, onFinalised);
+                        const listener = new SpeechToText(onAnythingSaid, onFinalised, onFinishedListening);
                         listener.startListening();
                     } catch (error) {
                         console.log(error);
                     }
+
+
 
                     var constraints = {
                         audio: true
