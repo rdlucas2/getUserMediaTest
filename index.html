@@ -15,6 +15,7 @@
             <div id="buttons">
                 <button class="record">Record</button>
                 <button class="stop">Stop</button>
+                <!--<button id="startSpeechToText">Speech To Text</button>-->
             </div>
         </section>
         <section class="sound-clips">
@@ -30,11 +31,6 @@
         -->
 
         </section>
-        <div id="servermessages">
-            <div id="future"></div>
-            <input id="chat_input" type="text">
-            <input type="button" id="chat_btn" value="Send Message">
-        </div>
         <div id="audiostuff">
             <input type="button" id="bufferSource_btn" value="Get Audio From Buffer Source">
             <input type="button" id="audio_btn" value="Get Audio From Socket">
@@ -55,10 +51,18 @@
             <input type="button" id="file_btn" value="Send">
         </div>
     </form>
+    <div id="servermessages">
+        <input id="chat_input" width="500" type="text">
+        <input type="button" id="chat_btn" value="Send Message">
+        <ul id="speechToTextZone">
+        </ul>
+    </div>
+
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="socket.io-stream.js"></script>
     <script src="delivery.js"></script>
+    <script src="SpeechToText.js"></script>
     <script>
         $(function() {
             // var socket = io.connect('http://localhost:4200');
@@ -124,6 +128,32 @@
 
                 if (navigator.getUserMedia) {
                     console.log('getUserMedia supported.');
+
+                    // $('#startSpeechToText').click(function(e) {
+                    // e.preventDefault();
+                    const onAnythingSaid = text => console.log(`Interim text: ${text}`);
+                    const onFinalised = text => {
+                            var tmp = $('#chat_input').val() + ' ' + text;
+                            console.log(tmp);
+                            $('#chat_input').val(tmp);
+                            // $('#chat_input').val(text);
+                        } //$('#speechToTextZone').append('<li>' + text + '</li>'); //console.log(`Finalised text: ${text}`);
+                    const onFinishedListening = function() {
+                        console.log('finished listening, restart');
+                        try {
+                            const listener = new SpeechToText(onAnythingSaid, onFinalised, onFinishedListening);
+                            listener.startListening();
+                        } catch (error) {
+                            console.log(error);
+                        }
+                    }
+                    try {
+                        const listener = new SpeechToText(onAnythingSaid, onFinalised, onFinishedListening);
+                        listener.startListening();
+                    } catch (error) {
+                        console.log(error);
+                    }
+                    // });
 
                     var constraints = {
                         audio: true
@@ -296,7 +326,10 @@
                 }
 
                 socket.on('broad', function(data) {
-                    $('#future').html(data);
+                    // $('#future').html(data);
+                    var msg = new SpeechSynthesisUtterance(data);
+                    window.speechSynthesis.speak(msg);
+                    $('#speechToTextZone').append('<li>' + data + '</li>');
                 });
 
                 $('#chat_btn').click(function(e) {
@@ -304,6 +337,7 @@
                     var message = $('#chat_input').val();
                     console.log('sending: ' + message);
                     socket.emit('messages', message);
+                    $('#chat_input').val('');
                 });
 
                 $('#audio_btn').click(function(e) {

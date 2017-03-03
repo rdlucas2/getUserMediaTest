@@ -29,6 +29,9 @@ app.get('/delivery.js', function(req, res, next) {
 app.get('/style.css', function(req, res, next) {
     res.sendFile(__dirname + '/style.css');
 });
+app.get('/SpeechToText.js', function(req, res, next) {
+    res.sendFile(__dirname + '/SpeechToText.js');
+});
 app.get('/ATC_Theme_-_Washington_Saxophone_Quartet_Version.mp3', function(req, res, next) {
     res.sendFile(__dirname + '/ATC_Theme_-_Washington_Saxophone_Quartet_Version.mp3');
 });
